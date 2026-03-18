@@ -10,9 +10,9 @@
 ```mermaid
 graph TB
     subgraph External["外部系统"]
-        FeishuAPI["飞书 Open API<br/>(REST)"]
-        FeishuWS["飞书 WebSocket<br/>(事件推送)"]
-        MCPEndpoint["MCP 端点<br/>(文档操作)"]
+        FeishuAPI["飞书 Open API - REST"]
+        FeishuWS["飞书 WebSocket - 事件推送"]
+        MCPEndpoint["MCP 端点 - 文档操作"]
         FeishuUser["飞书用户"]
     end
 
@@ -25,7 +25,7 @@ graph TB
     subgraph Plugin["openclaw-lark 插件"]
         Entry["index.ts<br/>插件入口"]
 
-        subgraph ChannelLayer["渠道适配层 (channel/)"]
+        subgraph ChannelLayer["渠道适配层 - channel/"]
             PluginDef["plugin.ts<br/>ChannelPlugin 定义"]
             Monitor["monitor.ts<br/>WebSocket 监控"]
             EventHandlers["event-handlers.ts<br/>事件路由"]
@@ -34,8 +34,8 @@ graph TB
             Onboarding["onboarding.ts<br/>配置向导"]
         end
 
-        subgraph MessagingLayer["消息处理层 (messaging/)"]
-            subgraph Inbound["入站 (inbound/)"]
+        subgraph MessagingLayer["消息处理层 - messaging/"]
+            subgraph Inbound["入站 - inbound/"]
                 Handler["handler.ts<br/>七阶段流水线"]
                 Parse["parse.ts<br/>事件解析"]
                 Enrich["enrich.ts<br/>消息增强"]
@@ -43,7 +43,7 @@ graph TB
                 Dispatch["dispatch.ts<br/>Agent 分发"]
                 Dedup["dedup.ts<br/>消息去重"]
             end
-            subgraph Outbound["出站 (outbound/)"]
+            subgraph Outbound["出站 - outbound/"]
                 Send["send.ts<br/>消息/卡片发送"]
                 Deliver["deliver.ts<br/>高层发送封装"]
                 Media["media.ts<br/>媒体上传"]
@@ -51,7 +51,7 @@ graph TB
             Converters["converters/<br/>18种消息类型转换"]
         end
 
-        subgraph CardLayer["卡片渲染层 (card/)"]
+        subgraph CardLayer["卡片渲染层 - card/"]
             ReplyDisp["reply-dispatcher.ts<br/>回复分发器工厂"]
             StreamCtrl["streaming-card-controller.ts<br/>流式卡片状态机"]
             Builder["builder.ts<br/>卡片构建"]
@@ -59,13 +59,13 @@ graph TB
             CardKit["cardkit.ts<br/>CardKit 2.0 API"]
         end
 
-        subgraph ToolsLayer["工具注册层 (tools/)"]
+        subgraph ToolsLayer["工具注册层 - tools/"]
             OAPITools["oapi/<br/>30+ OAPI 工具"]
             MCPTools["mcp/doc/<br/>3个文档工具"]
             OAuthTools["oauth.ts<br/>OAuth 授权工具"]
         end
 
-        subgraph CoreLayer["核心基础设施层 (core/)"]
+        subgraph CoreLayer["核心基础设施层 - core/"]
             LarkClient["lark-client.ts<br/>SDK 客户端管理"]
             Accounts["accounts.ts<br/>多账号管理"]
             TokenStore["token-store.ts<br/>令牌安全存储"]
@@ -77,13 +77,11 @@ graph TB
         Commands["commands/<br/>诊断/健康检查/授权"]
     end
 
-    %% 外部 → 插件
     FeishuUser -->|发送消息| FeishuWS
     FeishuWS --> Monitor
     FeishuAPI <--> LarkClient
     MCPEndpoint <--> MCPTools
 
-    %% 宿主 ↔ 插件
     PluginAPI --> Entry
     Entry --> PluginDef
     Entry --> OAPITools
@@ -94,7 +92,6 @@ graph TB
     AgentRuntime <--> OAPITools
     AgentRuntime <--> MCPTools
 
-    %% 插件内部
     Monitor --> EventHandlers
     EventHandlers --> ChatQueue
     ChatQueue --> Handler
@@ -114,7 +111,6 @@ graph TB
     Deliver --> Send
     Media --> FeishuAPI
 
-    %% 核心层依赖
     Monitor --> LarkClient
     LarkClient --> Accounts
     OAPITools --> LarkClient
@@ -208,7 +204,6 @@ graph LR
         doctor["commands/doctor"]
     end
 
-    %% index.ts 依赖
     index --> plugin
     index --> larkClient
     index --> oapiIndex
@@ -217,7 +212,6 @@ graph LR
     index --> commands
     index --> securityCheck
 
-    %% channel 层依赖
     plugin --> accounts
     plugin --> larkClient
     plugin --> send
@@ -233,7 +227,6 @@ graph LR
     eventHandlers --> chatQueue
     eventHandlers --> abortDetect
 
-    %% messaging inbound 依赖
     handler --> parse
     handler --> enrich
     handler --> gate
@@ -245,7 +238,6 @@ graph LR
     dispatch --> mention
     dispatch --> chatQueue
 
-    %% card 层依赖
     replyDispatcher --> streamingCtrl
     replyDispatcher --> replyMode
     replyDispatcher --> send
@@ -257,14 +249,12 @@ graph LR
     streamingCtrl --> send
     cardkit --> larkClient
 
-    %% tools 依赖
     oapiIndex --> larkClient
     mcpDoc --> larkClient
     oauth --> tokenStore
     oauth --> uatClient
     autoAuth --> tokenStore
 
-    %% core 内部依赖
     larkClient --> accounts
     uatClient --> tokenStore
 
@@ -300,47 +290,47 @@ sequenceDiagram
 
     Host->>Entry: 加载 openclaw.plugin.json
     Host->>Entry: import default plugin
-    Host->>Entry: plugin.register(api)
+    Host->>Entry: plugin.register api
 
     activate Entry
-    Entry->>LC: LarkClient.setRuntime(api.runtime)
-    Entry->>Host: api.registerChannel(feishuPlugin)
-    Entry->>Host: registerOapiTools(api) — 30+ 工具
-    Entry->>Host: registerFeishuMcpDocTools(api) — 3 个文档工具
-    Entry->>Host: registerFeishuOAuthTool(api)
-    Entry->>Host: registerFeishuOAuthBatchAuthTool(api)
-    Entry->>Host: api.on('before_tool_call', ...)
-    Entry->>Host: api.on('after_tool_call', ...)
-    Entry->>Host: api.registerCli('feishu-diagnose')
-    Entry->>Host: registerCommands(api) — 聊天命令
-    Entry->>Entry: emitSecurityWarnings()
+    Entry->>LC: LarkClient.setRuntime
+    Entry->>Host: api.registerChannel feishuPlugin
+    Entry->>Host: registerOapiTools — 30+ 工具
+    Entry->>Host: registerFeishuMcpDocTools — 3 个文档工具
+    Entry->>Host: registerFeishuOAuthTool
+    Entry->>Host: registerFeishuOAuthBatchAuthTool
+    Entry->>Host: api.on before_tool_call
+    Entry->>Host: api.on after_tool_call
+    Entry->>Host: api.registerCli feishu-diagnose
+    Entry->>Host: registerCommands — 聊天命令
+    Entry->>Entry: emitSecurityWarnings
     deactivate Entry
 
     Note over Host: 启动渠道网关
 
-    Host->>Monitor: gateway.startAccount(ctx)
+    Host->>Monitor: gateway.startAccount
 
     activate Monitor
-    Monitor->>LC: LarkClient.setGlobalConfig(cfg)
-    Monitor->>LC: LarkClient.fromAccount(account)
+    Monitor->>LC: LarkClient.setGlobalConfig
+    Monitor->>LC: LarkClient.fromAccount
     LC-->>Monitor: larkClient 实例（缓存）
 
-    Monitor->>Monitor: new MessageDedup()
-    Monitor->>LC: lark.startWS(handlers, abortSignal)
+    Monitor->>Monitor: new MessageDedup
+    Monitor->>LC: lark.startWS handlers, abortSignal
 
     activate LC
-    LC->>Bot: GET /open-apis/bot/v3/info (probe)
+    LC->>Bot: GET /open-apis/bot/v3/info probe
     Bot-->>LC: botOpenId, botName
 
-    LC->>LC: new EventDispatcher()
-    LC->>LC: dispatcher.register(handlers)
+    LC->>LC: new EventDispatcher
+    LC->>LC: dispatcher.register handlers
     Note over LC: 注册 5 类事件处理器
 
-    LC->>WS: new WSClient().start()
+    LC->>WS: new WSClient start
     Note over WS: WebSocket 连接建立
     WS-->>LC: 持续接收事件
 
-    LC-->>Monitor: Promise 挂起（等待 abortSignal）
+    LC-->>Monitor: Promise 挂起 等待 abortSignal
     deactivate LC
     deactivate Monitor
 ```
@@ -351,57 +341,57 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    Start([飞书用户发送消息]) --> WSEvent[WebSocket 事件到达]
+    Start(["飞书用户发送消息"]) --> WSEvent["WebSocket 事件到达"]
 
-    WSEvent --> EventHandler["event-handlers.ts<br/>handleMessageEvent()"]
+    WSEvent --> EventHandler["event-handlers.ts<br/>handleMessageEvent"]
 
-    EventHandler --> OwnerCheck{事件所有权校验<br/>app_id 匹配?}
-    OwnerCheck -->|不匹配| Discard1([丢弃])
-    OwnerCheck -->|匹配| DedupCheck{消息去重<br/>tryRecord()}
+    EventHandler --> OwnerCheck{"事件所有权校验<br/>app_id 匹配?"}
+    OwnerCheck -->|不匹配| Discard1(["丢弃"])
+    OwnerCheck -->|匹配| DedupCheck{"消息去重<br/>tryRecord"}
 
-    DedupCheck -->|重复| Discard2([跳过])
-    DedupCheck -->|新消息| ExpiryCheck{过期检查<br/>isMessageExpired()}
+    DedupCheck -->|重复| Discard2(["跳过"])
+    DedupCheck -->|新消息| ExpiryCheck{"过期检查<br/>isMessageExpired"}
 
-    ExpiryCheck -->|过期| Discard3([丢弃])
-    ExpiryCheck -->|有效| AbortCheck{中断快速路径<br/>isLikelyAbortText()?}
+    ExpiryCheck -->|过期| Discard3(["丢弃"])
+    ExpiryCheck -->|有效| AbortCheck{"中断快速路径<br/>isLikelyAbortText"}
 
-    AbortCheck -->|是中断指令| AbortFast["立即中断活跃回复<br/>abortController.abort()<br/>abortCard()"]
+    AbortCheck -->|是中断指令| AbortFast["立即中断活跃回复<br/>abortController.abort<br/>abortCard"]
     AbortCheck -->|否| Enqueue
 
-    AbortFast --> Enqueue["enqueueFeishuChatTask()<br/>加入会话串行队列"]
+    AbortFast --> Enqueue["enqueueFeishuChatTask<br/>加入会话串行队列"]
     Enqueue --> Pipeline
 
     subgraph Pipeline["handler.ts — 七阶段流水线"]
         direction TB
-        S1["① 账号解析<br/>getLarkAccount()<br/>构造 accountScopedCfg"]
-        S2["② 事件解析<br/>parseMessageEvent()<br/>→ MessageContext"]
-        S3["③ 轻量增强<br/>resolveSenderInfo()<br/>解析发送者名称"]
-        S4{"④ 策略门控<br/>checkMessageGate()"}
-        S5["⑤ 用户名预热<br/>prefetchUserNames()"]
-        S6["⑥ 重量级解析（并行）"]
-        S7["⑦ 分发到 Agent<br/>dispatchToAgent()"]
+        S1["1 账号解析<br/>getLarkAccount<br/>构造 accountScopedCfg"]
+        S2["2 事件解析<br/>parseMessageEvent<br/>生成 MessageContext"]
+        S3["3 轻量增强<br/>resolveSenderInfo<br/>解析发送者名称"]
+        S4{"4 策略门控<br/>checkMessageGate"}
+        S5["5 用户名预热<br/>prefetchUserNames"]
+        S6["6 重量级解析 - 并行"]
+        S7["7 分发到 Agent<br/>dispatchToAgent"]
 
         S1 --> S2 --> S3 --> S4
-        S4 -->|拒绝| GateReject([记录历史 → 返回])
+        S4 -->|拒绝| GateReject(["记录历史后返回"])
         S4 -->|通过| S5 --> S6 --> S7
     end
 
-    subgraph ParallelResolve["阶段⑥ 并行执行"]
-        ResolveMedia["resolveMedia()<br/>下载图片/文件"]
-        ResolveQuote["resolveQuotedContent()<br/>解析引用消息"]
-        SubstitutePaths["substituteMediaPaths()<br/>替换 file-key"]
+    subgraph ParallelResolve["阶段6 并行执行"]
+        ResolveMedia["resolveMedia<br/>下载图片/文件"]
+        ResolveQuote["resolveQuotedContent<br/>解析引用消息"]
+        SubstitutePaths["substituteMediaPaths<br/>替换 file-key"]
     end
 
     S6 --> ParallelResolve
 
-    subgraph DispatchRouting["阶段⑦ 分发路由"]
-        IsFeishuCmd{/feishu_* 命令?}
-        IsSysCmd{系统命令?<br/>/new /reset 等}
-        IsAbortMsg{中断消息?}
+    subgraph DispatchRouting["阶段7 分发路由"]
+        IsFeishuCmd{"/feishu_* 命令?"}
+        IsSysCmd{"系统命令?<br/>/new /reset 等"}
+        IsAbortMsg{"中断消息?"}
 
         I18nCard["i18n 卡片回复"]
-        SysDispatch["dispatchSystemCommand()<br/>纯文本回复"]
-        NormalDispatch["dispatchNormalMessage()<br/>流式卡片回复"]
+        SysDispatch["dispatchSystemCommand<br/>纯文本回复"]
+        NormalDispatch["dispatchNormalMessage<br/>流式卡片回复"]
 
         IsFeishuCmd -->|是| I18nCard
         IsFeishuCmd -->|否| IsSysCmd
@@ -439,53 +429,53 @@ sequenceDiagram
     participant IM as 飞书 IM API
     participant User as 飞书用户
 
-    Dispatch->>Factory: createFeishuReplyDispatcher()
-    Factory->>Factory: resolveReplyMode() → streaming
-    Factory->>Ctrl: new StreamingCardController(deps)
-    Factory-->>Dispatch: {dispatcher, replyOptions, ...}
+    Dispatch->>Factory: createFeishuReplyDispatcher
+    Factory->>Factory: resolveReplyMode -> streaming
+    Factory->>Ctrl: new StreamingCardController
+    Factory-->>Dispatch: dispatcher, replyOptions
 
-    Dispatch->>Agent: dispatchReplyFromConfig()
+    Dispatch->>Agent: dispatchReplyFromConfig
     Note over Agent: LLM 开始推理
 
-    Agent->>Ctrl: onReasoningStream({text: "思考中..."})
-    Ctrl->>Ctrl: ensureCardCreated()
+    Agent->>Ctrl: onReasoningStream 思考中...
+    Ctrl->>Ctrl: ensureCardCreated
 
     activate Ctrl
-    Ctrl->>CK: createCardEntity() → cardId
-    Ctrl->>IM: sendCardByCardId(cardId) → messageId
-    Note over Ctrl: idle → creating → streaming
+    Ctrl->>CK: createCardEntity -> cardId
+    Ctrl->>IM: sendCardByCardId -> messageId
+    Note over Ctrl: idle -> creating -> streaming
     deactivate Ctrl
 
-    Ctrl->>Flush: throttledUpdate()
-    Flush->>CK: streamCardContent(思考文本)
-    CK-->>User: 💭 卡片显示思考过程
+    Ctrl->>Flush: throttledUpdate
+    Flush->>CK: streamCardContent 思考文本
+    CK-->>User: 卡片显示思考过程
 
     loop 流式文本回调
-        Agent->>Ctrl: onPartialReply({text: "部分文本..."})
+        Agent->>Ctrl: onPartialReply 部分文本
         Ctrl->>Ctrl: 累积 accumulatedText
-        Ctrl->>Flush: throttledUpdate()
-        Flush->>CK: streamCardContent(累积文本)
-        CK-->>User: 卡片实时更新（打字机效果）
+        Ctrl->>Flush: throttledUpdate
+        Flush->>CK: streamCardContent 累积文本
+        CK-->>User: 卡片实时更新 打字机效果
     end
 
-    Agent->>Ctrl: deliver({text: "完整回复片段"})
+    Agent->>Ctrl: deliver 完整回复片段
     Ctrl->>Ctrl: 累积 completedText
 
     Note over Agent: 推理完成
 
-    Agent->>Dispatch: dispatcher.waitForIdle()
-    Dispatch->>Ctrl: markFullyComplete()
-    Dispatch->>Ctrl: onIdle()
+    Agent->>Dispatch: dispatcher.waitForIdle
+    Dispatch->>Ctrl: markFullyComplete
+    Dispatch->>Ctrl: onIdle
 
     activate Ctrl
-    Ctrl->>CK: setCardStreamingMode(false)
-    Ctrl->>Ctrl: resolveImagesAwait()
-    Ctrl->>Ctrl: buildCardContent('complete')
-    Ctrl->>CK: updateCardKitCard(终态卡片)
-    Note over Ctrl: streaming → completed
+    Ctrl->>CK: setCardStreamingMode false
+    Ctrl->>Ctrl: resolveImagesAwait
+    Ctrl->>Ctrl: buildCardContent complete
+    Ctrl->>CK: updateCardKitCard 终态卡片
+    Note over Ctrl: streaming -> completed
     deactivate Ctrl
 
-    CK-->>User: ✅ 最终卡片（含耗时统计）
+    CK-->>User: 最终卡片 含耗时统计
 ```
 
 ---
@@ -496,15 +486,15 @@ sequenceDiagram
 stateDiagram-v2
     [*] --> idle
 
-    idle --> creating: ensureCardCreated()
+    idle --> creating: ensureCardCreated
 
     creating --> streaming: CardKit/IM 卡片创建成功
     creating --> creation_failed: 卡片创建失败
     creating --> aborted: 用户中断
     creating --> terminated: 消息不可用
 
-    streaming --> completed: onIdle() 正常完成
-    streaming --> aborted: abortCard() 用户中断
+    streaming --> completed: onIdle 正常完成
+    streaming --> aborted: abortCard 用户中断
     streaming --> terminated: UnavailableGuard 检测
 
     creation_failed --> [*]: 降级为静态文本发送
@@ -514,12 +504,12 @@ stateDiagram-v2
     terminated --> [*]
 
     note right of idle: 初始状态
-    note right of creating: 正在创建 CardKit 实体\n和 IM 消息
-    note right of streaming: 流式推送文本\nCardKit 打字机效果
+    note right of creating: 正在创建 CardKit 实体和 IM 消息
+    note right of streaming: 流式推送文本 CardKit 打字机效果
     note right of completed: 终态卡片已更新
     note right of aborted: 显示已中断卡片
-    note right of terminated: 消息被撤回/删除
-    note right of creation_failed: 降级路径:\n走静态 deliver 发送
+    note right of terminated: 消息被撤回或删除
+    note right of creation_failed: 降级路径 走静态 deliver 发送
 ```
 
 ---
@@ -532,18 +522,18 @@ flowchart LR
         E1["消息 A<br/>chat_1"]
         E2["消息 B<br/>chat_1"]
         E3["消息 C<br/>chat_2"]
-        E4["消息 D<br/>chat_1<br/>thread_1"]
-        E5["中断 ✋<br/>chat_1"]
+        E4["消息 D<br/>chat_1 thread_1"]
+        E5["中断信号<br/>chat_1"]
     end
 
-    subgraph Queues["会话队列（串行）"]
-        Q1["队列: acct:chat_1<br/>───────────────<br/>A → B → ✋"]
-        Q2["队列: acct:chat_2<br/>───────────────<br/>C"]
-        Q3["队列: acct:chat_1:thread_1<br/>───────────────<br/>D"]
+    subgraph Queues["会话队列 - 串行"]
+        Q1["队列 acct:chat_1<br/>A - B - 中断"]
+        Q2["队列 acct:chat_2<br/>C"]
+        Q3["队列 acct:chat_1:thread_1<br/>D"]
     end
 
     subgraph Processing["并行处理"]
-        P1["处理 A<br/>(流式回复中)"]
+        P1["处理 A<br/>流式回复中"]
         P2["处理 C"]
         P3["处理 D"]
     end
@@ -559,8 +549,8 @@ flowchart LR
     Q3 --> P3
 
     subgraph AbortPath["中断快速路径"]
-        AbortCheck["isLikelyAbortText()?"]
-        AbortAction["abortController.abort()<br/>abortCard()"]
+        AbortCheck["isLikelyAbortText?"]
+        AbortAction["abortController.abort<br/>abortCard"]
     end
 
     E5 -.->|入队前检查| AbortCheck
@@ -582,11 +572,11 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    Agent([OpenClaw Agent]) -->|决定调用工具| ToolCall["工具调用请求"]
+    Agent(["OpenClaw Agent"]) -->|决定调用工具| ToolCall["工具调用请求"]
 
-    ToolCall --> BeforeHook["api.on('before_tool_call')<br/>日志: 工具名 + 参数"]
+    ToolCall --> BeforeHook["api.on before_tool_call<br/>日志: 工具名 + 参数"]
 
-    BeforeHook --> ToolType{工具类型}
+    BeforeHook --> ToolType{"工具类型?"}
 
     ToolType -->|OAPI| OAPIPath
     ToolType -->|MCP| MCPPath
@@ -597,7 +587,7 @@ flowchart TD
         OAPIResolve["解析参数"]
         OAPIAuth["获取 OAuth UAT 令牌<br/>token-store.ts"]
         OAPIClient["LarkClient.sdk<br/>飞书 SDK 客户端"]
-        OAPICall["调用飞书 Open API<br/>(REST)"]
+        OAPICall["调用飞书 Open API - REST"]
 
         OAPIResolve --> OAPIAuth --> OAPIClient --> OAPICall
     end
@@ -606,9 +596,9 @@ flowchart TD
         direction TB
         MCPResolve["解析参数"]
         MCPRequest["发送 MCP 请求"]
-        MCPEndpoint["MCP 端点处理"]
+        MCPEp["MCP 端点处理"]
 
-        MCPResolve --> MCPRequest --> MCPEndpoint
+        MCPResolve --> MCPRequest --> MCPEp
     end
 
     subgraph OAuthPath["OAuth 工具路径"]
@@ -620,10 +610,10 @@ flowchart TD
     end
 
     OAPICall --> AfterHook
-    MCPEndpoint --> AfterHook
+    MCPEp --> AfterHook
     TokenOp --> AfterHook
 
-    AfterHook["api.on('after_tool_call')<br/>日志: 成功/失败 + 耗时"]
+    AfterHook["api.on after_tool_call<br/>日志: 成功/失败 + 耗时"]
 
     AfterHook --> Result["结果返回 Agent"]
     Result --> Agent
@@ -633,7 +623,7 @@ flowchart TD
     classDef oauth fill:#fce7f3,stroke:#db2777
 
     class OAPIResolve,OAPIAuth,OAPIClient,OAPICall oapi
-    class MCPResolve,MCPRequest,MCPEndpoint mcp
+    class MCPResolve,MCPRequest,MCPEp mcp
     class DeviceFlow,TokenOp oauth
 ```
 
@@ -644,40 +634,40 @@ flowchart TD
 ```mermaid
 flowchart TB
     subgraph Config["OpenClaw 配置"]
-        GlobalCfg["channels.feishu<br/>(顶层默认配置)"]
-        AcctMap["accounts:<br/>  bot-a: {appId, appSecret, ...}<br/>  bot-b: {appId, appSecret, ...}"]
+        GlobalCfg["channels.feishu<br/>顶层默认配置"]
+        AcctMap["accounts:<br/>  bot-a: appId, appSecret<br/>  bot-b: appId, appSecret"]
     end
 
     GlobalCfg --> Merge
     AcctMap --> Merge
 
-    subgraph Merge["配置合并 (accounts.ts)"]
-        MergeA["getLarkAccount('bot-a')<br/>= 默认 + bot-a 覆盖"]
-        MergeB["getLarkAccount('bot-b')<br/>= 默认 + bot-b 覆盖"]
+    subgraph Merge["配置合并 - accounts.ts"]
+        MergeA["getLarkAccount bot-a<br/>= 默认 + bot-a 覆盖"]
+        MergeB["getLarkAccount bot-b<br/>= 默认 + bot-b 覆盖"]
     end
 
     subgraph Clients["LarkClient 缓存"]
-        ClientA["LarkClient('bot-a')<br/>SDK + WebSocket + botOpenId"]
-        ClientB["LarkClient('bot-b')<br/>SDK + WebSocket + botOpenId"]
+        ClientA["LarkClient bot-a<br/>SDK + WebSocket + botOpenId"]
+        ClientB["LarkClient bot-b<br/>SDK + WebSocket + botOpenId"]
     end
 
     MergeA --> ClientA
     MergeB --> ClientB
 
     subgraph Monitor["并行 WebSocket 监听"]
-        MonA["monitorSingleAccount('bot-a')"]
-        MonB["monitorSingleAccount('bot-b')"]
+        MonA["monitorSingleAccount bot-a"]
+        MonB["monitorSingleAccount bot-b"]
     end
 
     ClientA --> MonA
     ClientB --> MonB
 
     subgraph EventProcess["事件处理"]
-        OwnerA{app_id == bot-a?}
-        OwnerB{app_id == bot-b?}
+        OwnerA{"app_id == bot-a?"}
+        OwnerB{"app_id == bot-b?"}
 
-        ScopeA["accountScopedCfg<br/>(bot-a 配置隔离)"]
-        ScopeB["accountScopedCfg<br/>(bot-b 配置隔离)"]
+        ScopeA["accountScopedCfg<br/>bot-a 配置隔离"]
+        ScopeB["accountScopedCfg<br/>bot-b 配置隔离"]
     end
 
     MonA --> OwnerA
@@ -685,7 +675,7 @@ flowchart TB
     OwnerA -->|是| ScopeA
     OwnerB -->|是| ScopeB
 
-    ScopeA --> Pipeline["七阶段流水线<br/>(各自独立策略)"]
+    ScopeA --> Pipeline["七阶段流水线<br/>各自独立策略"]
     ScopeB --> Pipeline
 
     classDef config fill:#e0e7ff,stroke:#6366f1
@@ -703,38 +693,38 @@ flowchart TB
 
 ```mermaid
 flowchart TD
-    Start["ensureCardCreated()"]
+    Start["ensureCardCreated"]
 
     Start --> TryCardKit["尝试 CardKit 2.0 流程"]
 
-    TryCardKit --> CreateEntity["createCardEntity()<br/>创建卡片实体"]
-    CreateEntity --> CreateOK{创建成功?}
+    TryCardKit --> CreateEntity["createCardEntity<br/>创建卡片实体"]
+    CreateEntity --> CreateOK{"创建成功?"}
 
-    CreateOK -->|成功| SendByCardId["sendCardByCardId()<br/>通过 card_id 发送 IM"]
-    SendByCardId --> SendOK{发送成功?}
+    CreateOK -->|成功| SendByCardId["sendCardByCardId<br/>通过 card_id 发送 IM"]
+    SendByCardId --> SendOK{"发送成功?"}
 
-    SendOK -->|成功| CardKitStreaming["CardKit 流式模式 ✅<br/>streamCardContent()<br/>打字机效果"]
+    SendOK -->|成功| CardKitStreaming["CardKit 流式模式<br/>streamCardContent<br/>打字机效果"]
 
     CreateOK -->|失败| TryIMCard
     SendOK -->|失败| TryIMCard
 
     TryIMCard["降级: 尝试 IM 卡片"]
-    TryIMCard --> SendCard["sendCardFeishu()<br/>发送普通交互卡片"]
-    SendCard --> IMCardOK{发送成功?}
+    TryIMCard --> SendCard["sendCardFeishu<br/>发送普通交互卡片"]
+    SendCard --> IMCardOK{"发送成功?"}
 
-    IMCardOK -->|成功| IMPatchMode["IM Patch 模式 ⚠️<br/>updateCardFeishu()<br/>整卡更新"]
+    IMCardOK -->|成功| IMPatchMode["IM Patch 模式<br/>updateCardFeishu<br/>整卡更新"]
 
-    IMCardOK -->|失败| CreationFailed["creation_failed 🔴<br/>降级为静态文本"]
+    IMCardOK -->|失败| CreationFailed["creation_failed<br/>降级为静态文本"]
 
     subgraph StreamingUpdate["流式更新阶段"]
-        CKUpdate["CardKit: streamCardContent()"]
-        CKFail{CardKit 更新失败?}
+        CKUpdate["CardKit: streamCardContent"]
+        CKFail{"CardKit 更新失败?"}
         CKUpdate --> CKFail
         CKFail -->|是| DisableCK["禁用 CardKit 流式<br/>cardKitCardId = null"]
-        DisableCK --> IMUpdate["降级: updateCardFeishu()"]
+        DisableCK --> IMUpdate["降级: updateCardFeishu"]
         CKFail -->|否| CKUpdate
 
-        RateLimit{API 限流 230020?}
+        RateLimit{"API 限流 230020?"}
         CKFail -->|限流| RateLimit
         RateLimit --> Skip["跳过本次更新"]
     end
@@ -742,8 +732,8 @@ flowchart TD
     CardKitStreaming --> StreamingUpdate
 
     subgraph FinalUpdate["终态更新"]
-        CloseStream["setCardStreamingMode(false)"]
-        FinalCard["updateCardKitCard(终态卡片)"]
+        CloseStream["setCardStreamingMode false"]
+        FinalCard["updateCardKitCard 终态卡片"]
         CloseStream --> FinalCard
     end
 
